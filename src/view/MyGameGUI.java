@@ -15,12 +15,9 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
-
 import communication.BattleShipClientSocket;
 import communication.BattleShipServerSocket;
 import communication.Protocol;
-import application.BattleField;
 import application.CellInfo;
 
 public class MyGameGUI extends JFrame
@@ -29,15 +26,12 @@ public class MyGameGUI extends JFrame
      * 
      */
     private static final long serialVersionUID = 1L;
-    private JPanel contentPane;
-    private static JTable myGrid;
-    private static JTable enemyGrid;
+    private JPanel contentPane;    
     private JTextArea chatArea;
     private static JTextArea historyArea;
     private JButton btnStart;
-    private String columnNames[] = { "", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J" };
-    private String dataValues[][] = { { "    1", "", "", "", "", "", "", "", "", "", "" }, { "    2", "", "", "", "", "", "", "", "", "", "" }, { "    3", "", "", "", "", "", "", "", "", "", "" }, { "    4", "", "", "", "", "", "", "", "", "", "" }, { "    5", "", "", "", "", "", "", "", "", "", "" }, { "    6", "", "", "", "", "", "", "", "", "", "" }, { "    7", "", "", "", "", "", "", "", "", "", "" }, { "    8", "", "", "", "", "", "", "", "", "", "" }, { "    9", "", "", "", "", "", "", "", "", "", "" }, { "    10", "", "", "", "", "", "", "", "", "", "" }, };
-    private static BattleField myBattleField;
+    private static Board myGrigBoard;
+    private static Board enemyGrigBoard;
     private static int shootCount = 0;
     private static BattleShipClientSocket client = null;
     public static String IPAddress = "";
@@ -45,6 +39,7 @@ public class MyGameGUI extends JFrame
     private static boolean isMyGameStarted = false;
     private static boolean isOpponentsGameStarted = false;
     private static boolean isMyTurn = true;
+    private static final int PORT = 4444; 
 
     public MyGameGUI()
     {
@@ -64,14 +59,13 @@ public class MyGameGUI extends JFrame
 	setContentPane(contentPane);
 	contentPane.setLayout(null);
 
-	// constructing the myGrid table
+	// constructing myGrid 
 	JLabel lblHome = new JLabel("HOME");
 	lblHome.setBounds(10, 11, 46, 14);
 	contentPane.add(lblHome);
 
-	myGrid = new JTable();
-	createTableModel(myGrid);
-	JScrollPane scrollPane = new JScrollPane(myGrid);
+	myGrigBoard = new Board();
+	JScrollPane scrollPane = new JScrollPane(myGrigBoard.table);
 	scrollPane.setBounds(10, 33, 440, 417);
 	contentPane.add(scrollPane);
 
@@ -80,9 +74,8 @@ public class MyGameGUI extends JFrame
 	lblEnemy.setBounds(470, 11, 46, 14);
 	contentPane.add(lblEnemy);
 
-	enemyGrid = new JTable();
-	createTableModel(enemyGrid);
-	JScrollPane scrollPane_1 = new JScrollPane(enemyGrid);
+	enemyGrigBoard = new Board();
+	JScrollPane scrollPane_1 = new JScrollPane(enemyGrigBoard.table);
 	scrollPane_1.setBounds(470, 33, 440, 417);
 	contentPane.add(scrollPane_1);
 
@@ -109,7 +102,7 @@ public class MyGameGUI extends JFrame
 			}
 			catch (Exception e2)
 			{
-			    JOptionPane.showMessageDialog(null, "Valid port number is from 1025 to 65535, you idiot!");
+			    port = PORT;
 			}
 		    }
 		}
@@ -163,13 +156,13 @@ public class MyGameGUI extends JFrame
 	contentPane.add(btnSend);
 
 	// restart button
-	JButton btnRestart = new JButton("Restart");
+	JButton btnRestart = new JButton("Play Again");
 	btnRestart.addActionListener(new ActionListener()
 	{
 	    @Override
 	    public void actionPerformed(ActionEvent e)
 	    {
-		// TODO: add unimplemented method
+		// TODO: add unimplemented method 
 	    }
 	});
 	btnRestart.setBounds(360, 670, 89, 23);
@@ -192,7 +185,7 @@ public class MyGameGUI extends JFrame
 	this.setResizable(false);
 
 	// add listener on enemy grid - a mouse click on the cell is a shoot
-	enemyGrid.addMouseListener(new MouseListener()
+	enemyGrigBoard.table.addMouseListener(new MouseListener()
 	{
 
 	    @Override
@@ -233,25 +226,13 @@ public class MyGameGUI extends JFrame
 
 	// get server port
 	String portString = JOptionPane.showInputDialog("Port Number?");
+	if(portString.equals(""))
+	{
+	    portString = "" + PORT;
+	}
 	// create server socket
 	Thread t = new Thread(new BattleShipServerSocket(Integer.parseInt(portString)));
 	t.start();
-    }
-
-    private void createTableModel(JTable table)
-    {
-	table.setModel(new DefaultTableModel(dataValues, columnNames)
-	{
-	    private static final long serialVersionUID = 1L;
-
-	    public boolean isCellEditable(int rowIndex, int columnIndex)
-	    {
-		return false;
-	    }
-	});
-	table.setRowHeight(39);
-	table.setCellSelectionEnabled(true);
-	table.setDefaultRenderer(Object.class, new CustomCellRenderer());
     }
 
     /**
@@ -285,8 +266,8 @@ public class MyGameGUI extends JFrame
 	    else
 	    {
 		Point p = e.getPoint();
-		int rowNo = enemyGrid.rowAtPoint(p);
-		int columnNo = enemyGrid.columnAtPoint(p);
+		int rowNo = enemyGrigBoard.table.rowAtPoint(p);
+		int columnNo = enemyGrigBoard.table.columnAtPoint(p);
 
 		// TODO: this might change according to protocol
 		String message = Protocol.shootMessage() + (char) (columnNo + 64) + "" + (rowNo + 1);
@@ -299,21 +280,21 @@ public class MyGameGUI extends JFrame
     private static void drawFire(CellInfo cell, JTable grid)
     {
 	new JLabel();
-	String txt = "<html>" + "<img src='file:C:\\Users\\ale\\Pictures\\ships\\fire.png' >" + "</html>";
+	String txt = "<html>" + "<img src='file:fire.png' >" + "</html>";
 	grid.getModel().setValueAt(txt, cell.getOriginalRowNo(), cell.getOriginalColumnNo());
     }
 
     private static void drawWater(CellInfo cell, JTable grid)
     {
 	new JLabel();
-	String txt = "<html>" + "<img src='file:C:\\Users\\ale\\Pictures\\ships\\water.png' >" + "</html>";
+	String txt = "<html>" + "<img src='file:water.png' >" + "</html>";
 	grid.getModel().setValueAt(txt, cell.getOriginalRowNo(), cell.getOriginalColumnNo());
     }
 
     private static void drawShip(CellInfo cell, JTable grid)
     {
 	new JLabel();
-	String txt = "<html>" + "<img src='file:C:\\Users\\ale\\Pictures\\ships\\ship.png' >" + "</html>";
+	String txt = "<html>" + "<img src='file:ship.png' >" + "</html>";
 	grid.getModel().setValueAt(txt, cell.getOriginalRowNo(), cell.getOriginalColumnNo());
     }
 
@@ -328,9 +309,10 @@ public class MyGameGUI extends JFrame
 
     private void startGame()
     {
-	myBattleField = new BattleField();
+//	myGrigBoard = new Board();
+//	myGrigBoard.battleField = new BattleField();
 	// Place random ships on the battlefield
-	myBattleField.placeAllShips();
+	myGrigBoard.battleField.placeAllShips();
 	putShipOnGUI();
 	btnStart.setEnabled(false);
 	// send message start game
@@ -361,26 +343,26 @@ public class MyGameGUI extends JFrame
     public static String updateGUIOnHomeGrid(CellInfo cellInfo)
     {
 	isMyTurn = true;
-	if (myBattleField.getPlan().contains(cellInfo)) // hit
+	if (myGrigBoard.battleField.getPlan().contains(cellInfo)) // hit
 	{
-	    CellInfo c = myBattleField.getCell(cellInfo);
+	    CellInfo c = myGrigBoard.battleField.getCell(cellInfo);
 	    c.setIsHit();
-	    drawFire(cellInfo, myGrid);
+	    drawFire(cellInfo, myGrigBoard.table);
 	    return Protocol.hitMessage() + cellInfo.getColumnName() + "" + cellInfo.getRowNum();
 	}
 	else
 	// miss
 	{
-	    drawWater(cellInfo, myGrid);
+	    drawWater(cellInfo, myGrigBoard.table);
 	    return Protocol.missMessage() + cellInfo.getColumnName() + "" + cellInfo.getRowNum();
 	}
     }
 
     public void putShipOnGUI()
     {
-	for (CellInfo cell : myBattleField.getPlan())
+	for (CellInfo cell : myGrigBoard.battleField.getPlan())
 	{
-	    drawShip(cell, myGrid);
+	    drawShip(cell, myGrigBoard.table);
 	}
     }
 
@@ -400,7 +382,7 @@ public class MyGameGUI extends JFrame
     {
 	if (cellInfo.isHit())
 	{
-	    drawFire(cellInfo, enemyGrid);
+	    drawFire(cellInfo, enemyGrigBoard.table);
 	    shootCount++;
 	    if (shootCount == 17)
 	    {
@@ -415,7 +397,7 @@ public class MyGameGUI extends JFrame
 	}
 	else if (cellInfo.isSplashed())
 	{
-	    drawWater(cellInfo, enemyGrid);
+	    drawWater(cellInfo, enemyGrigBoard.table);
 	    return "SPLASH!";
 	}
 	else
