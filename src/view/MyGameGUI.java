@@ -280,21 +280,27 @@ public class MyGameGUI extends JFrame
     private static void drawFire(CellInfo cell, JTable grid)
     {
 	new JLabel();
-	String txt = "<html>" + "<img src='file:fire.png' >" + "</html>";
+	String txt = "<html>" + "<img src=\""
+		+ MyGameGUI.class.getResource("/img/fire.png")
+		+ "\">" + "</html>";
 	grid.getModel().setValueAt(txt, cell.getOriginalRowNo(), cell.getOriginalColumnNo());
     }
 
     private static void drawWater(CellInfo cell, JTable grid)
     {
 	new JLabel();
-	String txt = "<html>" + "<img src='file:water.png' >" + "</html>";
+	String txt = "<html>" + "<img src=\""
+		+ MyGameGUI.class.getResource("/img/water.png")
+		+ "\">" + "</html>";
 	grid.getModel().setValueAt(txt, cell.getOriginalRowNo(), cell.getOriginalColumnNo());
     }
 
     private static void drawShip(CellInfo cell, JTable grid)
     {
 	new JLabel();
-	String txt = "<html>" + "<img src='file:ship.png' >" + "</html>";
+	String txt = "<html>" + "<img src=\""
+		+ MyGameGUI.class.getResource("/img/ship.png")
+		+ "\">" + "</html>";
 	grid.getModel().setValueAt(txt, cell.getOriginalRowNo(), cell.getOriginalColumnNo());
     }
 
@@ -309,13 +315,9 @@ public class MyGameGUI extends JFrame
 
     private void startGame()
     {
-//	myGrigBoard = new Board();
-//	myGrigBoard.battleField = new BattleField();
-	// Place random ships on the battlefield
 	myGrigBoard.battleField.placeAllShips();
 	putShipOnGUI();
 	btnStart.setEnabled(false);
-	// send message start game
 	sendMessageFromClient(Protocol.startGameMessage());
 	setMyStartGame(true);
     }
